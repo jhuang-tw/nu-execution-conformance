@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -11,11 +11,17 @@
     "./broker": {
       "types": "./broker.d.ts",
       "import": "./broker.mjs"
+    },
+    "./redaction": {
+      "types": "./redaction.d.ts",
+      "import": "./redaction.mjs"
     }
   },
   "files": [
     "broker.d.ts",
     "broker.mjs",
+    "redaction.d.ts",
+    "redaction.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -24,7 +30,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }

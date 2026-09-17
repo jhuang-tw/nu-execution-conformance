@@ -17,6 +17,15 @@ The first contract contains the fourteen broker behaviors that were previously c
 
 Product-specific tests stay in the product repository. Evidence-window tests, Aernu operation-evidence tests, gateway behavior, and implementation details are intentionally not part of this baseline.
 
+## Redaction baseline
+
+The redaction contract contains the two policy-boundary behaviors that were previously copied across Ternu, Vyrnu, and Zenu:
+
+- structured secret and runtime-field redaction without corrupting ordinary source code;
+- audit sinks retaining only bounded identifiers, decisions, and hashes.
+
+Consumers inject their own redaction functions and in-memory audit sink. The package never reads credentials, process state, files, or product policy.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -40,7 +49,19 @@ registerBrokerConformanceTests({
 });
 ```
 
-The package registers tests with Node's built-in test runner. It performs no I/O other than the behavior exercised through the injected broker.
+Redaction consumers register their implementation separately:
+
+```ts
+import { registerRedactionConformanceTests } from "nu-execution-conformance/redaction";
+
+registerRedactionConformanceTests({
+  redactString,
+  redactValue,
+  createAuditSink: () => new MemoryAuditSink(),
+});
+```
+
+The package registers tests with Node's built-in test runner. It performs no I/O other than behavior explicitly exercised through the injected adapters.
 
 ## Validation
 
