@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -23,6 +23,10 @@
     "./native-exit-code": {
       "types": "./native-exit-code.d.ts",
       "import": "./native-exit-code.mjs"
+    },
+    "./mutation-ledger": {
+      "types": "./mutation-ledger.d.ts",
+      "import": "./mutation-ledger.mjs"
     }
   },
   "files": [
@@ -34,6 +38,8 @@
     "error-contract.mjs",
     "native-exit-code.d.ts",
     "native-exit-code.mjs",
+    "mutation-ledger.d.ts",
+    "mutation-ledger.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -42,7 +48,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }

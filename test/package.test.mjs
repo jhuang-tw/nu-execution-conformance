@@ -18,6 +18,10 @@ import {
   nativeExitCodeConformanceTestCount,
   registerNativeExitCodeConformanceTests,
 } from "../native-exit-code.mjs";
+import {
+  mutationLedgerConformanceTestCount,
+  registerMutationLedgerConformanceTests,
+} from "../mutation-ledger.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -43,12 +47,19 @@ test("native exit-code conformance exports one bounded four-test contract", asyn
   assert.equal((source.match(/\btest\("/gu) ?? []).length, nativeExitCodeConformanceTestCount);
 });
 
+test("mutation-ledger conformance exports one bounded seven-test contract", async () => {
+  assert.equal(mutationLedgerConformanceTestCount, 7);
+  const source = await readFile(new URL("../mutation-ledger.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\("/gu) ?? []).length, mutationLedgerConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
     "../redaction.mjs",
     "../error-contract.mjs",
     "../native-exit-code.mjs",
+    "../mutation-ledger.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -102,5 +113,34 @@ test("invalid native exit-code adapters fail before any conformance tests are re
       windowsFixtureBase: "C:\\fixture",
     }),
     /fixturePrefix/u,
+  );
+});
+
+test("invalid mutation-ledger adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerMutationLedgerConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerMutationLedgerConformanceTests({}), /createBroker/u);
+  assert.throws(
+    () => registerMutationLedgerConformanceTests({
+      createBroker() {},
+      createLedger() {},
+      canonicalCallSignature() {},
+      createError() {},
+      isErrorCode() {},
+      fixturePrefix: "../unsafe",
+      codes: {},
+    }),
+    /fixturePrefix/u,
+  );
+  assert.throws(
+    () => registerMutationLedgerConformanceTests({
+      createBroker() {},
+      createLedger() {},
+      canonicalCallSignature() {},
+      createError() {},
+      isErrorCode() {},
+      fixturePrefix: "nu-ledger-test-",
+      codes: {},
+    }),
+    /codes\.requestKeyConflict/u,
   );
 });

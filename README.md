@@ -50,6 +50,19 @@ The native exit-code module contains four transport behaviors shared by Ternu, V
 
 Consumers inject their own first-party native provider. The shared contract creates only a bounded disposable workspace beneath the consumer-selected test root, executes through that injected provider, and removes the fixture afterward. It does not launch a sibling Nu runtime, open a network listener, or choose product policy.
 
+## Durable mutation-ledger baseline
+
+The mutation-ledger module contains seven SQLite-backed durability behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- successful mutations replay after broker and database reopen without a second provider call;
+- conflicting request keys and abandoned inflight claims fail before provider launch;
+- independent SQLite connections admit only one execution claim;
+- retries are allowed only after a provider-confirmed not-applied result;
+- manual applied and not-applied reconciliation controls replay authority;
+- reconciliation evidence is compare-and-swap bound to the exact mutation attempt.
+
+Consumers inject their own broker, SQLite ledger, canonical signature function, runtime error constructor, and product error codes. The package creates only a bounded temporary database and never owns a runtime implementation, product namespace, or reconciliation policy.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -106,6 +119,27 @@ registerNativeExitCodeConformanceTests({
   fixturePrefix: "product-exit-code-",
   windowsFixtureBase: join(process.env.PUBLIC ?? "C:\\Users\\Public", "ProductTests"),
   createProvider: (options) => new NativeProvider(options),
+});
+```
+
+Durable mutation consumers register their existing broker and ledger through a structural adapter:
+
+```ts
+import { registerMutationLedgerConformanceTests } from "nu-execution-conformance/mutation-ledger";
+
+registerMutationLedgerConformanceTests({
+  fixturePrefix: "product-ledger-test-",
+  createBroker: (providers, ledger) => new ToolBroker(providers, { mutationLedger: ledger }),
+  createLedger: (path) => new SqliteMutationLedger(path),
+  canonicalCallSignature,
+  createError: (code, message, options) => new ProductError(code, message, options),
+  isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
+  codes: {
+    requestKeyConflict: "PRODUCT_REQUEST_KEY_CONFLICT",
+    mutationInflightOrAmbiguous: "PRODUCT_MUTATION_INFLIGHT_OR_AMBIGUOUS",
+    mutationResolvedApplied: "PRODUCT_MUTATION_RESOLVED_APPLIED",
+    resolutionClaimChanged: "PRODUCT_RESOLUTION_CLAIM_CHANGED",
+  },
 });
 ```
 
