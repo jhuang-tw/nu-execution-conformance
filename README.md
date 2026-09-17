@@ -26,6 +26,19 @@ The redaction contract contains the two policy-boundary behaviors that were prev
 
 Consumers inject their own redaction functions and in-memory audit sink. The package never reads credentials, process state, files, or product policy.
 
+## Error normalization baseline
+
+The error-contract module contains six normalization behaviors shared by the deterministic Nu runtimes:
+
+- existing runtime errors and causes remain intact;
+- explicit applied outcomes, retryability, details, and codes survive normalization;
+- malformed foreign metadata fails closed to an unknown outcome and non-retryable state;
+- missing and blank codes use the product's own unexpected-error fallback;
+- foreign metadata survives when a code is absent;
+- non-Error throws remain ambiguous rather than being declared unapplied.
+
+Mutation replay and proven-unapplied retry behavior stay in the broker conformance contract. They are not duplicated in this module. Consumers inject only their own error constructor and normalizer.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -58,6 +71,17 @@ registerRedactionConformanceTests({
   redactString,
   redactValue,
   createAuditSink: () => new MemoryAuditSink(),
+});
+```
+
+Error-normalization consumers use a two-function adapter:
+
+```ts
+import { registerErrorContractConformanceTests } from "nu-execution-conformance/error-contract";
+
+registerErrorContractConformanceTests({
+  normalize: asProductError,
+  createError: (code, message, options) => new ProductError(code, message, options),
 });
 ```
 
