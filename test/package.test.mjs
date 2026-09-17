@@ -14,6 +14,10 @@ import {
   errorContractConformanceTestCount,
   registerErrorContractConformanceTests,
 } from "../error-contract.mjs";
+import {
+  nativeExitCodeConformanceTestCount,
+  registerNativeExitCodeConformanceTests,
+} from "../native-exit-code.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -33,11 +37,18 @@ test("error-contract conformance exports one bounded six-test contract", async (
   assert.equal((source.match(/\btest\("/gu) ?? []).length, errorContractConformanceTestCount);
 });
 
+test("native exit-code conformance exports one bounded four-test contract", async () => {
+  assert.equal(nativeExitCodeConformanceTestCount, 4);
+  const source = await readFile(new URL("../native-exit-code.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\("/gu) ?? []).length, nativeExitCodeConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
     "../redaction.mjs",
     "../error-contract.mjs",
+    "../native-exit-code.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -78,5 +89,18 @@ test("invalid error-contract adapters fail before any conformance tests are regi
   assert.throws(
     () => registerErrorContractConformanceTests({ normalize() {} }),
     /createError/u,
+  );
+});
+
+test("invalid native exit-code adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerNativeExitCodeConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerNativeExitCodeConformanceTests({}), /createProvider/u);
+  assert.throws(
+    () => registerNativeExitCodeConformanceTests({
+      createProvider() {},
+      fixturePrefix: "../unsafe",
+      windowsFixtureBase: "C:\\fixture",
+    }),
+    /fixturePrefix/u,
   );
 });

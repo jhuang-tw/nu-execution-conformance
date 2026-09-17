@@ -39,6 +39,17 @@ The error-contract module contains six normalization behaviors shared by the det
 
 Mutation replay and proven-unapplied retry behavior stay in the broker conformance contract. They are not duplicated in this module. Consumers inject only their own error constructor and normalizer.
 
+## Native exit-code baseline
+
+The native exit-code module contains four transport behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- PowerShell preserves native `0`, `1`, and `7` exits and reports thrown, missing, and terminating commands as failures;
+- Bash preserves native exits and missing-command failure;
+- CMD preserves native exits and quoted inline Node programs;
+- `run_checks` preserves quoted CMD inline-code arguments.
+
+Consumers inject their own first-party native provider. The shared contract creates only a bounded disposable workspace beneath the consumer-selected test root, executes through that injected provider, and removes the fixture afterward. It does not launch a sibling Nu runtime, open a network listener, or choose product policy.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -85,7 +96,20 @@ registerErrorContractConformanceTests({
 });
 ```
 
-The package registers tests with Node's built-in test runner. It performs no I/O other than behavior explicitly exercised through the injected adapters.
+Native execution consumers register a provider factory and product-owned fixture root:
+
+```ts
+import { join } from "node:path";
+import { registerNativeExitCodeConformanceTests } from "nu-execution-conformance/native-exit-code";
+
+registerNativeExitCodeConformanceTests({
+  fixturePrefix: "product-exit-code-",
+  windowsFixtureBase: join(process.env.PUBLIC ?? "C:\\Users\\Public", "ProductTests"),
+  createProvider: (options) => new NativeProvider(options),
+});
+```
+
+The package registers tests with Node's built-in test runner. It performs no network access or product activation. File-system activity is limited to bounded disposable fixtures, and process execution occurs only through the implementation injected by the consumer.
 
 ## Validation
 

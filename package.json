@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -19,6 +19,10 @@
     "./error-contract": {
       "types": "./error-contract.d.ts",
       "import": "./error-contract.mjs"
+    },
+    "./native-exit-code": {
+      "types": "./native-exit-code.d.ts",
+      "import": "./native-exit-code.mjs"
     }
   },
   "files": [
@@ -28,6 +32,8 @@
     "redaction.mjs",
     "error-contract.d.ts",
     "error-contract.mjs",
+    "native-exit-code.d.ts",
+    "native-exit-code.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -36,7 +42,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }
