@@ -111,6 +111,17 @@ The public-tunnel module contains four readiness behaviors shared by Ternu, Vyrn
 
 Consumers inject their existing URL extractor and readiness inspectors plus product-owned schema identities. The shared package does not launch tunnel processes, read host configuration, perform network access, or own product health policy.
 
+## Small deterministic safety baselines
+
+Four additional modules remove identical safety tests without moving product runtime ownership:
+
+- `audit-classification` verifies policy denials, quarantines, and ordinary execution errors remain distinguishable;
+- `native-patch-parent` verifies transactional parent creation and prevalidation before filesystem mutation;
+- `oauth-provider` verifies durable client/token state, one-time callback state, and resource URL drift rejection;
+- `windows-hidden-process` verifies every reviewed Windows launch path remains explicitly hidden.
+
+The first three use structural adapters. The hidden-process contract only reads the consumer checkout's reviewed source files and never launches a process.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -263,6 +274,34 @@ registerPublicTunnelConformanceTests({
     ready: "product.gateway_ready.v1",
   },
 });
+```
+
+The small safety modules are registered independently:
+
+```ts
+registerAuditClassificationConformanceTests({
+  errorPrefix: "PRODUCT",
+  classify: auditDecisionForErrorCode,
+});
+
+registerNativePatchParentConformanceTests({
+  fixturePrefix: "product-patch-",
+  applyTransaction: applyNativeTextTransaction,
+  isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
+  codes: { duplicate: "PRODUCT_NATIVE_TRANSACTION_DUPLICATE" },
+});
+
+registerOAuthProviderConformanceTests({
+  fixturePrefix: "product-oauth-",
+  createProvider: (options) => new PersistentOAuthClientProvider(options),
+  isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
+  codes: {
+    stateMismatch: "PRODUCT_OAUTH_STATE_MISMATCH",
+    resourceMismatch: "PRODUCT_OAUTH_RESOURCE_MISMATCH",
+  },
+});
+
+registerWindowsHiddenProcessConformanceTests();
 ```
 
 The package registers tests with Node's built-in test runner. It performs no network access or product activation. File-system activity is limited to bounded disposable fixtures, and process execution occurs only through the implementation injected by the consumer.

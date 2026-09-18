@@ -38,6 +38,22 @@ import {
   publicTunnelConformanceTestCount,
   registerPublicTunnelConformanceTests,
 } from "../public-tunnel.mjs";
+import {
+  auditClassificationConformanceTestCount,
+  registerAuditClassificationConformanceTests,
+} from "../audit-classification.mjs";
+import {
+  nativePatchParentConformanceTestCount,
+  registerNativePatchParentConformanceTests,
+} from "../native-patch-parent.mjs";
+import {
+  oauthProviderConformanceTestCount,
+  registerOAuthProviderConformanceTests,
+} from "../oauth-provider.mjs";
+import {
+  registerWindowsHiddenProcessConformanceTests,
+  windowsHiddenProcessConformanceTestCount,
+} from "../windows-hidden-process.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -93,6 +109,31 @@ test("public-tunnel conformance exports one bounded four-test contract", async (
   assert.equal((source.match(/\btest\(/gu) ?? []).length, publicTunnelConformanceTestCount);
 });
 
+test("audit-classification conformance exports one bounded one-test contract", async () => {
+  assert.equal(auditClassificationConformanceTestCount, 1);
+  const source = await readFile(new URL("../audit-classification.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, auditClassificationConformanceTestCount);
+});
+
+test("native-patch-parent conformance exports one bounded two-test contract", async () => {
+  assert.equal(nativePatchParentConformanceTestCount, 2);
+  const source = await readFile(new URL("../native-patch-parent.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, nativePatchParentConformanceTestCount);
+});
+
+test("oauth-provider conformance exports one bounded three-test contract", async () => {
+  assert.equal(oauthProviderConformanceTestCount, 3);
+  const source = await readFile(new URL("../oauth-provider.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, oauthProviderConformanceTestCount);
+});
+
+test("windows-hidden-process conformance exports one bounded one-test contract", async () => {
+  assert.equal(windowsHiddenProcessConformanceTestCount, 1);
+  const source = await readFile(new URL("../windows-hidden-process.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\(/gu) ?? []).length, windowsHiddenProcessConformanceTestCount);
+  assert.equal(typeof registerWindowsHiddenProcessConformanceTests, "function");
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
@@ -104,6 +145,10 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../process-session.mjs",
     "../resource-admission.mjs",
     "../public-tunnel.mjs",
+    "../audit-classification.mjs",
+    "../native-patch-parent.mjs",
+    "../oauth-provider.mjs",
+    "../windows-hidden-process.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -248,5 +293,42 @@ test("invalid public-tunnel adapters fail before any conformance tests are regis
       schemas: {},
     }),
     /schemas\.health/u,
+  );
+});
+
+test("invalid audit-classification adapters fail before test registration", () => {
+  assert.throws(() => registerAuditClassificationConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerAuditClassificationConformanceTests({}), /classify/u);
+  assert.throws(
+    () => registerAuditClassificationConformanceTests({ classify() {}, errorPrefix: "unsafe-prefix" }),
+    /errorPrefix/u,
+  );
+});
+
+test("invalid native-patch-parent adapters fail before test registration", () => {
+  assert.throws(() => registerNativePatchParentConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerNativePatchParentConformanceTests({}), /applyTransaction/u);
+  assert.throws(
+    () => registerNativePatchParentConformanceTests({
+      applyTransaction() {},
+      isErrorCode() {},
+      fixturePrefix: "patch-test-",
+      codes: {},
+    }),
+    /codes\.duplicate/u,
+  );
+});
+
+test("invalid oauth-provider adapters fail before test registration", () => {
+  assert.throws(() => registerOAuthProviderConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerOAuthProviderConformanceTests({}), /createProvider/u);
+  assert.throws(
+    () => registerOAuthProviderConformanceTests({
+      createProvider() {},
+      isErrorCode() {},
+      fixturePrefix: "oauth-test-",
+      codes: {},
+    }),
+    /codes\.stateMismatch/u,
   );
 });
