@@ -22,6 +22,10 @@ import {
   mutationLedgerConformanceTestCount,
   registerMutationLedgerConformanceTests,
 } from "../mutation-ledger.mjs";
+import {
+  operationStageConformanceTestCount,
+  registerOperationStageConformanceTests,
+} from "../operation-stage.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -53,6 +57,12 @@ test("mutation-ledger conformance exports one bounded seven-test contract", asyn
   assert.equal((source.match(/\btest\("/gu) ?? []).length, mutationLedgerConformanceTestCount);
 });
 
+test("operation-stage conformance exports one bounded eight-test contract", async () => {
+  assert.equal(operationStageConformanceTestCount, 8);
+  const source = await readFile(new URL("../operation-stage.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\("/gu) ?? []).length, operationStageConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
@@ -60,6 +70,7 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../error-contract.mjs",
     "../native-exit-code.mjs",
     "../mutation-ledger.mjs",
+    "../operation-stage.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -142,5 +153,24 @@ test("invalid mutation-ledger adapters fail before any conformance tests are reg
       codes: {},
     }),
     /codes\.requestKeyConflict/u,
+  );
+});
+
+test("invalid operation-stage adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerOperationStageConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerOperationStageConformanceTests({}), /createBroker/u);
+  assert.throws(
+    () => registerOperationStageConformanceTests({
+      createBroker() {},
+      createMemoryMutationLedger() {},
+      createMemoryStore() {},
+      createSqliteStore() {},
+      createError() {},
+      isErrorCode() {},
+      projectRuntimeSummary() {},
+      codes: {},
+      operationStageSchema: "nu.operation_stage_snapshot.v1",
+    }),
+    /codes\.stageTestFailure/u,
   );
 });

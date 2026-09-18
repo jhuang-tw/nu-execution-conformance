@@ -63,6 +63,21 @@ The mutation-ledger module contains seven SQLite-backed durability behaviors sha
 
 Consumers inject their own broker, SQLite ledger, canonical signature function, runtime error constructor, and product error codes. The package creates only a bounded temporary database and never owns a runtime implementation, product namespace, or reconciliation policy.
 
+## Operation-stage telemetry baseline
+
+The operation-stage module contains eight telemetry behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- active process liveness and caller attribution survive durable store restart without heartbeat spam;
+- failed-operation normalization preserves the applied outcome and a stable product error code;
+- abandoned active operations terminalize exactly once after runtime replacement;
+- explicit waiting evidence remains durable without inventing success or failure;
+- bounded in-memory event retention preserves monotonic sequence numbers;
+- provider failures keep their original error while recording one terminal stage;
+- telemetry reader tools do not recursively instrument themselves;
+- public runtime summaries retain only the bounded operation evidence fields.
+
+Consumers inject their broker, memory and SQLite stage stores, memory mutation ledger, error constructor, summary projector, schema identity, and product error codes. The shared package owns no telemetry database, runtime process, or product policy.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -139,6 +154,29 @@ registerMutationLedgerConformanceTests({
     mutationInflightOrAmbiguous: "PRODUCT_MUTATION_INFLIGHT_OR_AMBIGUOUS",
     mutationResolvedApplied: "PRODUCT_MUTATION_RESOLVED_APPLIED",
     resolutionClaimChanged: "PRODUCT_RESOLUTION_CLAIM_CHANGED",
+  },
+});
+```
+
+Operation-stage consumers register the existing telemetry implementation through one structural adapter:
+
+```ts
+import { registerOperationStageConformanceTests } from "nu-execution-conformance/operation-stage";
+
+registerOperationStageConformanceTests({
+  createBroker: (providers, options) => new ToolBroker(providers, options),
+  createMemoryMutationLedger: () => new MemoryMutationLedger(),
+  createMemoryStore: (runtimeId) => new MemoryOperationStageStore(runtimeId),
+  createSqliteStore: (path, runtimeId) => new SqliteOperationStageStore(path, runtimeId),
+  createError: (code, message, options) => new ProductError(code, message, options),
+  isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
+  projectRuntimeSummary,
+  operationStageSchema: "product.operation_stage_snapshot.v1",
+  codes: {
+    stageTestFailure: "PRODUCT_STAGE_TEST_FAILURE",
+    providerFailure: "PRODUCT_PROVIDER_FAILURE",
+    operationFailed: "PRODUCT_OPERATION_FAILED",
+    operationRuntimeLost: "PRODUCT_OPERATION_RUNTIME_LOST",
   },
 });
 ```
