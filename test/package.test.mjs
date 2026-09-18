@@ -34,6 +34,10 @@ import {
   registerResourceAdmissionConformanceTests,
   resourceAdmissionConformanceTestCount,
 } from "../resource-admission.mjs";
+import {
+  publicTunnelConformanceTestCount,
+  registerPublicTunnelConformanceTests,
+} from "../public-tunnel.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -83,6 +87,12 @@ test("resource-admission conformance exports one bounded three-test contract", a
   assert.equal((source.match(/\btest\("/gu) ?? []).length, resourceAdmissionConformanceTestCount);
 });
 
+test("public-tunnel conformance exports one bounded four-test contract", async () => {
+  assert.equal(publicTunnelConformanceTestCount, 4);
+  const source = await readFile(new URL("../public-tunnel.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\(/gu) ?? []).length, publicTunnelConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
@@ -93,6 +103,7 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../operation-stage.mjs",
     "../process-session.mjs",
     "../resource-admission.mjs",
+    "../public-tunnel.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -221,5 +232,21 @@ test("invalid resource-admission adapters fail before any conformance tests are 
       schemas: {},
     }),
     /schemas\.capture/u,
+  );
+});
+
+test("invalid public-tunnel adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerPublicTunnelConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerPublicTunnelConformanceTests({}), /extractPublicTunnelUrl/u);
+  assert.throws(
+    () => registerPublicTunnelConformanceTests({
+      extractPublicTunnelUrl() {},
+      inspectPublicTunnelReadiness() {},
+      inspectExternalReadiness() {},
+      productName: "Product",
+      productId: "product",
+      schemas: {},
+    }),
+    /schemas\.health/u,
   );
 });

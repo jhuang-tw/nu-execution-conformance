@@ -100,6 +100,17 @@ The resource-admission module contains three deterministic resource-safety behav
 
 Consumers inject their existing admission evaluator, resource-history store, schema identities, and fixture prefix. Windows sampling, process-tree collection, product release state, and public runtime projection remain product-local.
 
+## Public-tunnel baseline
+
+The public-tunnel module contains four readiness behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- Cloudflare quick-tunnel output yields the bounded public URL;
+- ngrok free and development domains are accepted without broad URL matching;
+- readiness distinguishes installation, configuration, authentication, passive observation, and connectivity without mutating tunnel state;
+- an existing public URL must expose the exact product health and readiness schemas.
+
+Consumers inject their existing URL extractor and readiness inspectors plus product-owned schema identities. The shared package does not launch tunnel processes, read host configuration, perform network access, or own product health policy.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -232,6 +243,24 @@ registerResourceAdmissionConformanceTests({
     host: "product.native_host_resource_telemetry.v1",
     admission: "product.native_resource_admission.v1",
     history: "product.native_resource_history.v1",
+  },
+});
+```
+
+Public-tunnel consumers inject only the existing pure contract surface:
+
+```ts
+import { registerPublicTunnelConformanceTests } from "nu-execution-conformance/public-tunnel";
+
+registerPublicTunnelConformanceTests({
+  productName: "Product",
+  productId: "product",
+  extractPublicTunnelUrl,
+  inspectPublicTunnelReadiness,
+  inspectExternalReadiness,
+  schemas: {
+    health: "product.gateway_health.v1",
+    ready: "product.gateway_ready.v1",
   },
 });
 ```
