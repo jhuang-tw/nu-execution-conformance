@@ -54,6 +54,18 @@ import {
   registerWindowsHiddenProcessConformanceTests,
   windowsHiddenProcessConformanceTestCount,
 } from "../windows-hidden-process.mjs";
+import {
+  registerWorkspaceRecoveryConformanceTests,
+  workspaceRecoveryConformanceTestCount,
+} from "../workspace-recovery.mjs";
+import {
+  registerReleaseContractConformanceTests,
+  releaseContractConformanceTestCount,
+} from "../release-contract.mjs";
+import {
+  cliWorktreeLifecycleConformanceTestCount,
+  registerCliWorktreeLifecycleConformanceTests,
+} from "../cli-worktree-lifecycle.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -134,7 +146,25 @@ test("windows-hidden-process conformance exports one bounded one-test contract",
   assert.equal(typeof registerWindowsHiddenProcessConformanceTests, "function");
 });
 
-test("shared conformance remains product-neutral and runtime-free", async () => {
+test("workspace-recovery conformance exports one bounded six-test contract", async () => {
+  assert.equal(workspaceRecoveryConformanceTestCount, 6);
+  const source = await readFile(new URL("../workspace-recovery.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, workspaceRecoveryConformanceTestCount);
+});
+
+test("release-contract conformance exports one bounded one-test contract", async () => {
+  assert.equal(releaseContractConformanceTestCount, 1);
+  const source = await readFile(new URL("../release-contract.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, releaseContractConformanceTestCount);
+});
+
+test("cli-worktree-lifecycle conformance exports one bounded one-test contract", async () => {
+  assert.equal(cliWorktreeLifecycleConformanceTestCount, 1);
+  const source = await readFile(new URL("../cli-worktree-lifecycle.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/^\s*test\(/gmu) ?? []).length, cliWorktreeLifecycleConformanceTestCount);
+});
+
+test("shared deterministic conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
     "../redaction.mjs",
@@ -149,12 +179,25 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../native-patch-parent.mjs",
     "../oauth-provider.mjs",
     "../windows-hidden-process.mjs",
+    "../workspace-recovery.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
     assert.doesNotMatch(source, /(?:child_process|worker_threads|express|modelcontextprotocol)/u);
   }
   assert.doesNotMatch(sources[0], /(?:http:|https:)/u);
+});
+
+test("bounded process-backed conformance remains product-neutral", async () => {
+  const sources = await Promise.all([
+    "../release-contract.mjs",
+    "../cli-worktree-lifecycle.mjs",
+  ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
+  for (const source of sources) {
+    assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
+    assert.doesNotMatch(source, /(?:worker_threads|express|modelcontextprotocol)/u);
+    assert.match(source, /node:child_process/u);
+  }
 });
 
 test("invalid broker adapters fail before any conformance tests are registered", () => {
@@ -330,5 +373,59 @@ test("invalid oauth-provider adapters fail before test registration", () => {
       codes: {},
     }),
     /codes\.stateMismatch/u,
+  );
+});
+
+test("invalid workspace-recovery adapters fail before test registration", () => {
+  assert.throws(() => registerWorkspaceRecoveryConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerWorkspaceRecoveryConformanceTests({}), /createProvider/u);
+  assert.throws(
+    () => registerWorkspaceRecoveryConformanceTests({
+      createProvider() {},
+      buildLoadedPolicy() {},
+      createPolicyEngine() {},
+      createReceiptStore() {},
+      isError() {},
+      fixtureParent: "../unsafe",
+      fixturePrefix: "recovery-test-",
+      toolResultSchema: "product.tool_result.v1",
+    }),
+    /fixtureParent/u,
+  );
+});
+
+test("invalid release-contract adapters fail before test registration", () => {
+  assert.throws(() => registerReleaseContractConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerReleaseContractConformanceTests({}), /productName/u);
+  assert.throws(
+    () => registerReleaseContractConformanceTests({
+      productName: "Product",
+      releaseSchema: "product.gateway_release.v1",
+      releaseManifestFile: "unsafe.json",
+      activationScript: "scripts/activate.ps1",
+      launcherScript: "scripts/start.ps1",
+      temporaryPrefix: "product-release-",
+    }),
+    /releaseManifestFile/u,
+  );
+});
+
+test("invalid cli-worktree-lifecycle adapters fail before test registration", () => {
+  assert.throws(() => registerCliWorktreeLifecycleConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerCliWorktreeLifecycleConformanceTests({}), /createDefaultConfig/u);
+  assert.throws(
+    () => registerCliWorktreeLifecycleConformanceTests({
+      createDefaultConfig() {},
+      saveConfig() {},
+      productName: "Product",
+      productId: "product",
+      fixturePrefix: "product-cli-",
+      cliPath: "src/cli.ts",
+      configEnv: "unsafe-env",
+      stateEnv: "PRODUCT_STATE_DIR",
+      ledgerEnv: "PRODUCT_LEDGER_PATH",
+      errorCode: "PRODUCT_CLI_PERSISTENT_RUNTIME_REQUIRED",
+    }),
+    /configEnv/u,
   );
 });

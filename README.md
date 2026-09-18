@@ -122,6 +122,16 @@ Four additional modules remove identical safety tests without moving product run
 
 The first three use structural adapters. The hidden-process contract only reads the consumer checkout's reviewed source files and never launches a process.
 
+## Workspace recovery and release lifecycle baselines
+
+Three larger contracts remove repeated end-to-end safety tests while leaving all implementations product-owned:
+
+- `workspace-recovery` verifies workspace-token fencing, external drift rotation, independent scratch spaces, exact receipt previews, transactional revert authority, and bounded in-memory receipt expiry;
+- `release-contract` verifies candidate, historical, and rollback manifest versions plus verifier ordering before pointer mutation;
+- `cli-worktree-lifecycle` verifies direct CLI worktree creation fails before filesystem mutation unless a persistent runtime owns the operation.
+
+Consumers inject native providers, policy builders, receipt stores, config functions, schema identities, and product error matching. The shared tests create only disposable fixtures. Release and CLI probes launch bounded hidden test processes; they do not activate a live release, start a gateway, or mutate a product checkout.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -302,6 +312,50 @@ registerOAuthProviderConformanceTests({
 });
 
 registerWindowsHiddenProcessConformanceTests();
+```
+
+Workspace recovery injects the existing policy and native execution surfaces:
+
+```ts
+registerWorkspaceRecoveryConformanceTests({
+  fixtureParent: ".product-test-tmp",
+  fixturePrefix: "recovery-contract-",
+  toolResultSchema: "product.tool_result.v1",
+  createProvider: (options) => new NativeProvider(options),
+  buildLoadedPolicy,
+  createPolicyEngine: (loaded, profile) => GatewayPolicyEngine.create(loaded, profile),
+  createReceiptStore: (options) => new NativeOperationReceiptStore(options),
+  isError: (error, suffix, applied) =>
+    error instanceof ProductError &&
+    error.code.endsWith(suffix) &&
+    (applied === undefined || error.operationApplied === applied),
+});
+```
+
+Release and CLI lifecycle consumers provide only product identity and existing helpers:
+
+```ts
+registerReleaseContractConformanceTests({
+  productName: "Product",
+  releaseSchema: "product.gateway_release.v1",
+  releaseManifestFile: ".product-release.json",
+  activationScript: "scripts/activate-windows-gateway.ps1",
+  launcherScript: "scripts/start-windows-gateway.ps1",
+  temporaryPrefix: "product-release-contract-",
+});
+
+registerCliWorktreeLifecycleConformanceTests({
+  productName: "Product",
+  productId: "product",
+  fixturePrefix: "product-cli-worktree-lifecycle-",
+  cliPath: "src/cli.ts",
+  configEnv: "PRODUCT_CONFIG",
+  stateEnv: "PRODUCT_STATE_DIR",
+  ledgerEnv: "PRODUCT_LEDGER_PATH",
+  errorCode: "PRODUCT_CLI_PERSISTENT_RUNTIME_REQUIRED",
+  createDefaultConfig: defaultConfig,
+  saveConfig,
+});
 ```
 
 The package registers tests with Node's built-in test runner. It performs no network access or product activation. File-system activity is limited to bounded disposable fixtures, and process execution occurs only through the implementation injected by the consumer.

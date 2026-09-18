@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -59,6 +59,18 @@
     "./windows-hidden-process": {
       "types": "./windows-hidden-process.d.ts",
       "import": "./windows-hidden-process.mjs"
+    },
+    "./workspace-recovery": {
+      "types": "./workspace-recovery.d.ts",
+      "import": "./workspace-recovery.mjs"
+    },
+    "./release-contract": {
+      "types": "./release-contract.d.ts",
+      "import": "./release-contract.mjs"
+    },
+    "./cli-worktree-lifecycle": {
+      "types": "./cli-worktree-lifecycle.d.ts",
+      "import": "./cli-worktree-lifecycle.mjs"
     }
   },
   "files": [
@@ -88,6 +100,12 @@
     "oauth-provider.mjs",
     "windows-hidden-process.d.ts",
     "windows-hidden-process.mjs",
+    "workspace-recovery.d.ts",
+    "workspace-recovery.mjs",
+    "release-contract.d.ts",
+    "release-contract.mjs",
+    "cli-worktree-lifecycle.d.ts",
+    "cli-worktree-lifecycle.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -96,7 +114,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && node --check process-session.mjs && node --check resource-admission.mjs && node --check public-tunnel.mjs && node --check audit-classification.mjs && node --check native-patch-parent.mjs && node --check oauth-provider.mjs && node --check windows-hidden-process.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && node --check process-session.mjs && node --check resource-admission.mjs && node --check public-tunnel.mjs && node --check audit-classification.mjs && node --check native-patch-parent.mjs && node --check oauth-provider.mjs && node --check windows-hidden-process.mjs && node --check workspace-recovery.mjs && node --check release-contract.mjs && node --check cli-worktree-lifecycle.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }
