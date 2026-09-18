@@ -90,6 +90,16 @@ The process-session module contains five in-memory lifecycle behaviors shared by
 
 Consumers inject only their native process-session store and product error-code matcher. Retained-capsule recovery remains product-local because Ternu and the richer runtimes intentionally differ in how a missing capsule root is terminalized.
 
+## Resource-admission baseline
+
+The resource-admission module contains three deterministic resource-safety behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- observed and historical working-set demand must preserve the physical-headroom admission boundary;
+- hashed workload history persists only conservative non-decreasing peaks;
+- commit pressure remains advisory while degraded telemetry never bypasses a provable physical denial.
+
+Consumers inject their existing admission evaluator, resource-history store, schema identities, and fixture prefix. Windows sampling, process-tree collection, product release state, and public runtime projection remain product-local.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -203,6 +213,25 @@ registerProcessSessionConformanceTests({
   isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
   codes: {
     stopUnconfirmed: "PRODUCT_NATIVE_PROCESS_STOP_UNCONFIRMED",
+  },
+});
+```
+
+Resource-admission consumers inject the existing deterministic implementation:
+
+```ts
+import { registerResourceAdmissionConformanceTests } from "nu-execution-conformance/resource-admission";
+
+registerResourceAdmissionConformanceTests({
+  fixturePrefix: "product-resource-history-",
+  evaluateAdmission: evaluateNativeResourceAdmission,
+  createHistoryStore: (options) => new NativeResourceHistoryStore(options),
+  schemas: {
+    capture: "product.native_resource_telemetry_capture.v1",
+    processTree: "product.native_process_tree_resource_telemetry.v1",
+    host: "product.native_host_resource_telemetry.v1",
+    admission: "product.native_resource_admission.v1",
+    history: "product.native_resource_history.v1",
   },
 });
 ```

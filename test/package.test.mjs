@@ -30,6 +30,10 @@ import {
   processSessionConformanceTestCount,
   registerProcessSessionConformanceTests,
 } from "../process-session.mjs";
+import {
+  registerResourceAdmissionConformanceTests,
+  resourceAdmissionConformanceTestCount,
+} from "../resource-admission.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -73,6 +77,12 @@ test("process-session conformance exports one bounded five-test contract", async
   assert.equal((source.match(/\btest\("/gu) ?? []).length, processSessionConformanceTestCount);
 });
 
+test("resource-admission conformance exports one bounded three-test contract", async () => {
+  assert.equal(resourceAdmissionConformanceTestCount, 3);
+  const source = await readFile(new URL("../resource-admission.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\("/gu) ?? []).length, resourceAdmissionConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
@@ -82,6 +92,7 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../mutation-ledger.mjs",
     "../operation-stage.mjs",
     "../process-session.mjs",
+    "../resource-admission.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -196,5 +207,19 @@ test("invalid process-session adapters fail before any conformance tests are reg
       codes: {},
     }),
     /codes\.stopUnconfirmed/u,
+  );
+});
+
+test("invalid resource-admission adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerResourceAdmissionConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerResourceAdmissionConformanceTests({}), /evaluateAdmission/u);
+  assert.throws(
+    () => registerResourceAdmissionConformanceTests({
+      evaluateAdmission() {},
+      createHistoryStore() {},
+      fixturePrefix: "resource-test-",
+      schemas: {},
+    }),
+    /schemas\.capture/u,
   );
 });

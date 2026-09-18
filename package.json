@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -35,6 +35,10 @@
     "./process-session": {
       "types": "./process-session.d.ts",
       "import": "./process-session.mjs"
+    },
+    "./resource-admission": {
+      "types": "./resource-admission.d.ts",
+      "import": "./resource-admission.mjs"
     }
   },
   "files": [
@@ -52,6 +56,8 @@
     "operation-stage.mjs",
     "process-session.d.ts",
     "process-session.mjs",
+    "resource-admission.d.ts",
+    "resource-admission.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -60,7 +66,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && node --check process-session.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && node --check process-session.mjs && node --check resource-admission.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }
