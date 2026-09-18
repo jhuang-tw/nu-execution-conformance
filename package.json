@@ -1,6 +1,6 @@
 {
   "name": "nu-execution-conformance",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Runtime-free conformance tests for shared Nu execution contracts.",
   "type": "module",
   "exports": {
@@ -31,6 +31,10 @@
     "./operation-stage": {
       "types": "./operation-stage.d.ts",
       "import": "./operation-stage.mjs"
+    },
+    "./process-session": {
+      "types": "./process-session.d.ts",
+      "import": "./process-session.mjs"
     }
   },
   "files": [
@@ -46,6 +50,8 @@
     "mutation-ledger.mjs",
     "operation-stage.d.ts",
     "operation-stage.mjs",
+    "process-session.d.ts",
+    "process-session.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -54,7 +60,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && npm test && npm pack --dry-run"
+    "verify": "node --check broker.mjs && node --check redaction.mjs && node --check error-contract.mjs && node --check native-exit-code.mjs && node --check mutation-ledger.mjs && node --check operation-stage.mjs && node --check process-session.mjs && npm test && npm pack --dry-run"
   },
   "license": "MIT"
 }

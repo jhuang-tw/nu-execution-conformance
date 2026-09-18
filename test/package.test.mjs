@@ -26,6 +26,10 @@ import {
   operationStageConformanceTestCount,
   registerOperationStageConformanceTests,
 } from "../operation-stage.mjs";
+import {
+  processSessionConformanceTestCount,
+  registerProcessSessionConformanceTests,
+} from "../process-session.mjs";
 
 test("broker conformance exports one bounded fourteen-test contract", async () => {
   assert.equal(brokerConformanceTestCount, 14);
@@ -63,6 +67,12 @@ test("operation-stage conformance exports one bounded eight-test contract", asyn
   assert.equal((source.match(/\btest\("/gu) ?? []).length, operationStageConformanceTestCount);
 });
 
+test("process-session conformance exports one bounded five-test contract", async () => {
+  assert.equal(processSessionConformanceTestCount, 5);
+  const source = await readFile(new URL("../process-session.mjs", import.meta.url), "utf8");
+  assert.equal((source.match(/\btest\("/gu) ?? []).length, processSessionConformanceTestCount);
+});
+
 test("shared conformance remains product-neutral and runtime-free", async () => {
   const sources = await Promise.all([
     "../broker.mjs",
@@ -71,6 +81,7 @@ test("shared conformance remains product-neutral and runtime-free", async () => 
     "../native-exit-code.mjs",
     "../mutation-ledger.mjs",
     "../operation-stage.mjs",
+    "../process-session.mjs",
   ].map((path) => readFile(new URL(path, import.meta.url), "utf8")));
   for (const source of sources) {
     assert.doesNotMatch(source, /\b(?:Ternu|Vyrnu|Zenu|Aernu)\b/u);
@@ -172,5 +183,18 @@ test("invalid operation-stage adapters fail before any conformance tests are reg
       operationStageSchema: "nu.operation_stage_snapshot.v1",
     }),
     /codes\.stageTestFailure/u,
+  );
+});
+
+test("invalid process-session adapters fail before any conformance tests are registered", () => {
+  assert.throws(() => registerProcessSessionConformanceTests(undefined), /adapter object/u);
+  assert.throws(() => registerProcessSessionConformanceTests({}), /createStore/u);
+  assert.throws(
+    () => registerProcessSessionConformanceTests({
+      createStore() {},
+      isErrorCode() {},
+      codes: {},
+    }),
+    /codes\.stopUnconfirmed/u,
   );
 });

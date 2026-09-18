@@ -78,6 +78,18 @@ The operation-stage module contains eight telemetry behaviors shared by Ternu, V
 
 Consumers inject their broker, memory and SQLite stage stores, memory mutation ledger, error constructor, summary projector, schema identity, and product error codes. The shared package owns no telemetry database, runtime process, or product policy.
 
+## Process-session baseline
+
+The process-session module contains five in-memory lifecycle behaviors shared by Ternu, Vyrnu, and Zenu:
+
+- material progress advances only on spawn, output, and terminal evidence;
+- stdout and stderr preserve independent UTF-8 decoder state across paged reads;
+- retained-output boundaries do not corrupt split UTF-8 code points;
+- workspace stop fails closed when termination cannot be confirmed;
+- a close-observed process cannot be re-targeted by a same-turn PID stop.
+
+Consumers inject only their native process-session store and product error-code matcher. Retained-capsule recovery remains product-local because Ternu and the richer runtimes intentionally differ in how a missing capsule root is terminalized.
+
 ## Integration
 
 Pin an exact repository revision as a development dependency, then register the contract from the product's broker test file:
@@ -177,6 +189,20 @@ registerOperationStageConformanceTests({
     providerFailure: "PRODUCT_PROVIDER_FAILURE",
     operationFailed: "PRODUCT_OPERATION_FAILED",
     operationRuntimeLost: "PRODUCT_OPERATION_RUNTIME_LOST",
+  },
+});
+```
+
+Process-session consumers keep product-specific retained-capsule behavior beside one shared lifecycle adapter:
+
+```ts
+import { registerProcessSessionConformanceTests } from "nu-execution-conformance/process-session";
+
+registerProcessSessionConformanceTests({
+  createStore: () => new NativeProcessSessionStore(),
+  isErrorCode: (error, code) => error instanceof ProductError && error.code === code,
+  codes: {
+    stopUnconfirmed: "PRODUCT_NATIVE_PROCESS_STOP_UNCONFIRMED",
   },
 });
 ```
